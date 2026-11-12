@@ -4,7 +4,7 @@
 
 Ironhack Data Science & Machine Learning, Week 9 final project · **LLM track** · Gabriel Gomes
 
-**Slides:** [add the link to the slides here]
+**Slides:** [[Canva link]](https://canva.link/8ccrjlx2jo0kgvr)
 
 ---
 
