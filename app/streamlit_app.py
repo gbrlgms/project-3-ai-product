@@ -8,9 +8,11 @@ reached from the links in answers, in the catalog and in search results.
 The OpenAI key is read from .env, or from .streamlit/secrets.toml, never from the code.
 """
 
+import datetime
 import html
 import os
 import sys
+import threading
 import time
 
 import streamlit as st
@@ -28,6 +30,8 @@ EXAMPLES = ["Suggest a gentle Japanese drama from the 1950s, under two hours.",
             "What was the production of Boyhood like?",
             ]
 GRID_COLUMNS, GRID_PAGE, LIST_PAGE = 5, 50, 100
+SESSION_LIMIT = 20       # questions per visit
+DAILY_LIMIT = 500        # questions per day for the whole server, about $0.50 at $0.001 a question
 TMDB_NOTICE = "This product uses the TMDB API but is not endorsed or certified by TMDB."
 
 st.set_page_config(page_title=PRODUCT, page_icon="🎞️", layout="wide")
@@ -79,11 +83,61 @@ p.tagline { font-size: 22px !important; line-height: 1.3; color: rgba(255, 255, 
 [class*="st-key-card_"] [data-testid="stElementToolbar"] { display: none; }
 </style>""")
 
-try:                                       # a key in secrets.toml wins over .env; no secrets file is fine
-    if "OPENAI_API_KEY" in st.secrets:
-        os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-except Exception:
-    pass
+def secret(name: str) -> str | None:
+    """A value from .streamlit/secrets.toml (or the Cloud app's secrets), else from the environment or .env."""
+    try:
+        if name in st.secrets:
+            return st.secrets[name]
+    except Exception:                      # no secrets file is fine
+        pass
+    return os.environ.get(name)
+
+
+if secret("OPENAI_API_KEY"):               # a key in the secrets wins over .env
+    os.environ["OPENAI_API_KEY"] = secret("OPENAI_API_KEY")
+
+
+@st.cache_resource(show_spinner="Downloading the film index (first start only, a minute or two)...")
+def app_files() -> list[str]:
+    """Make sure the gitignored files the app reads are here. On a fresh clone or a Cloud server they are
+    downloaded once from the private Hugging Face dataset named in the secrets, with the licensed fonts.
+    Returns any required file still missing. The fonts are optional: without them the app uses free fallbacks."""
+    def missing():
+        return [path for path in ("models/chroma/chroma.sqlite3", "models/config.json",
+                                  "data/processed/criterion_films_enriched.csv",
+                                  "data/raw/wikipedia/articles_manifest.csv") if not (ROOT / path).exists()]
+    no_fonts = not (ROOT / "app" / "static" / "fonts" / "Extenda30Deca.ttf").exists()
+    if (missing() or no_fonts) and secret("HF_DATASET"):
+        download_app_files(secret("HF_DATASET"), secret("HF_TOKEN"))
+    return missing()
+
+
+if app_files():
+    st.error("The film index is missing. Build it with the notebooks (see the README), or set HF_DATASET and "
+             "HF_TOKEN in the secrets so the app can download it.")
+    st.stop()
+
+
+@st.cache_resource
+def daily_usage() -> dict:
+    """Questions asked today on this server, shared by every visitor, so a public app has a ceiling on its cost."""
+    return {"day": None, "count": 0, "lock": threading.Lock()}
+
+
+def limit_reached() -> str | None:
+    """Count one question, or return why it cannot be asked: the session or the server has used up its share."""
+    if st.session_state.get("asked", 0) >= SESSION_LIMIT:
+        return f"You have asked {SESSION_LIMIT} questions, the limit for one visit. Thank you for trying the guide!"
+    usage = daily_usage()
+    with usage["lock"]:
+        today = datetime.date.today()
+        if usage["day"] != today:
+            usage.update(day=today, count=0)
+        if usage["count"] >= DAILY_LIMIT:
+            return "The guide has answered all the questions it can today. Please come back tomorrow."
+        usage["count"] += 1
+    st.session_state["asked"] = st.session_state.get("asked", 0) + 1
+    return None
 
 
 @st.cache_resource(show_spinner="Loading the film index (about 30 seconds, once)...")
@@ -167,7 +221,7 @@ def guide_page() -> None:
     load_core()
     messages = st.session_state.setdefault("messages", [])
 
-    question = st.chat_input("What would you like to watch?")
+    question = st.chat_input("What would you like to watch?", disabled=st.session_state.get("asked", 0) >= SESSION_LIMIT)
     examples = st.empty()
     if not messages and not question:
         with examples.container(key="examples"):
@@ -185,6 +239,10 @@ def guide_page() -> None:
                 show_reply(message)
             else:
                 st.markdown(message["text"])
+
+    if question and (reason := limit_reached()):
+        st.markdown(f'<p class="notice">{html.escape(reason)}</p>', unsafe_allow_html=True)
+        question = None
 
     if question:
         history = list(messages)

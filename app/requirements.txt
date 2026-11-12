@@ -1,0 +1,19 @@
+# What the app needs on Streamlit Community Cloud, which reads this file before the one at the repo root.
+# The root requirements.txt also covers the notebooks and the data download.
+
+# torch without the GPU libraries, which the free tier has no room for
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.2
+
+streamlit==1.58.0
+chromadb==1.5.9          # the version that built the index in models/chroma
+sentence-transformers>=3.0
+openai>=2.0
+rank-bm25>=0.2
+huggingface_hub>=0.30    # downloads the index from the private dataset
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.4        # stop words for the keyword search
+beautifulsoup4>=4.12     # imported by the data modules the catalog uses
+python-dotenv>=1.0
+pillow>=10

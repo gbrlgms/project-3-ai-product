@@ -616,6 +616,35 @@ def version_summary(scored: pd.DataFrame, eval_set: pd.DataFrame) -> pd.Series:
     })
 
 
+# Deployment: the files the app needs that git ignores, kept in a private Hugging Face dataset
+
+# Paths relative to the repo root, kept the same in the dataset. They hold TMDB data, which must not be
+# republished, and licensed fonts, which must not be redistributed, so the dataset stays private and the
+# deployed app reads it with a token from its secrets.
+APP_FONTS = ["app/static/fonts/*.ttf", "app/static/fonts/*.otf"]
+APP_FILES = ["models/chroma/**", "models/config.json",
+             "data/processed/criterion_films_enriched.csv", "data/processed/chunks_excluded.csv",
+             "data/raw/wikipedia/articles_manifest.csv", *APP_FONTS]
+
+
+def upload_app_files(repo_id: str, token: str) -> None:
+    """Upload APP_FILES to a private dataset `repo_id` ("user/name"), creating it if needed. Run it once,
+    and again whenever the index is rebuilt. It needs a token with write access."""
+    from huggingface_hub import HfApi
+    api = HfApi(token=token)
+    api.create_repo(repo_id, repo_type="dataset", private=True, exist_ok=True)
+    api.upload_folder(repo_id=repo_id, repo_type="dataset", folder_path=str(ROOT), allow_patterns=APP_FILES,
+                      ignore_patterns=["**/.DS_Store"], commit_message="Files for the Criterion Guide app")
+
+
+def download_app_files(repo_id: str, token: str) -> None:
+    """Download APP_FILES into the repo, at the paths the app reads. Done by the deployed app on its first
+    start. A read-only token is enough."""
+    from huggingface_hub import snapshot_download
+    snapshot_download(repo_id=repo_id, repo_type="dataset", local_dir=str(ROOT), allow_patterns=APP_FILES,
+                      token=token)
+
+
 # App: the film pages, the catalog and search
 
 EXCLUDED_ARTICLES = ROOT / "data" / "processed" / "chunks_excluded.csv"
