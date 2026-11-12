@@ -61,7 +61,9 @@ RAW_TMDB = Path("data/raw/tmdb")
 OUT = Path("data/processed")
 FILMS_CSV = OUT / "criterion_films.csv"
 
-COUNTRY_FIXES = {"Austrailia": "Australia", "United Kindom": "United Kingdom"}
+COUNTRY_FIXES = {"Austrailia": "Australia", "United Kindom": "United Kingdom",
+                 "United States": "United States of America"}      # the list's names, written as TMDB writes them
+ORIGIN_COUNTRY_NAMES = {"US": "United States of America", "FR": "France"}   # TMDB country codes used when it has no production country
 DIRECTOR_FIXES = {"Stan Brakage": "Stan Brakhage"}
 WIKI_LINK_FIXES = {"Les Vacances de Monsieur Hulot": "Monsieur Hulot's Holiday"}    # a redirect that hid a duplicate film
 FINAL_STATUSES = {"ok", "disambiguation", "missing"}   # articles not downloaded again on a rerun
@@ -648,7 +650,7 @@ def flatten(d: dict) -> dict:
         "runtime": d.get("runtime") or (d.get("episode_run_time") or [None])[0],
         "genres": "|".join(g["name"] for g in d.get("genres", [])),
         "countries": "|".join(c.get("name", c.get("iso_3166_1", "")) for c in d.get("production_countries", []))
-                     or "|".join(d.get("origin_country", [])),
+                     or "|".join(ORIGIN_COUNTRY_NAMES.get(c, c) for c in d.get("origin_country", [])),
         "languages": "|".join(l.get("english_name") or l["name"] for l in d.get("spoken_languages", [])),
         "original_language": d.get("original_language"),
         "tagline": d.get("tagline") or None,

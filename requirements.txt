@@ -19,6 +19,8 @@ joblib>=1.3
 pyarrow>=14          # reads the clothing parquet file
 streamlit>=1.40
 python-dotenv>=1.0
+requests>=2.31       # download_data.py: Wikipedia, Wikidata and TMDB
+beautifulsoup4>=4.12 # parses the Wikipedia pages
 
 # Model track
 sentence-transformers>=3.0
@@ -32,7 +34,7 @@ accelerate>=1.0
 openai>=1.50
 tiktoken>=0.8
 chromadb>=1.0
-# langchain>=1.0 langchain-openai>=1.0 langchain-tavily>=0.2   # optional: agents and web search
+rank-bm25>=0.2      # keyword search, merged with the embeddings
 
 # Notebooks. Already present if you installed Anaconda or JupyterLab.
 jupyterlab>=4.0

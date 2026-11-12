@@ -1,5 +1,6 @@
 # Data is never committed. Anyone cloning the repo runs download_data.py.
 data/raw/*
+data/processed/*
 !data/raw/.gitkeep
 !data/README.md
 
@@ -34,3 +35,10 @@ env/
 Thumbs.db
 .vscode/
 .idea/
+
+# licensed font files (see app/static/fonts/README.md)
+app/static/fonts/*.woff2
+app/static/fonts/*.woff
+app/static/fonts/*.otf
+app/static/fonts/*.ttf
+.gitignore

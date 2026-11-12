@@ -1,0 +1,48 @@
+# The app's look. Streamlit reads this file when you run `streamlit run app/streamlit_app.py` from the repo root.
+
+[server]
+enableStaticServing = true            # serves app/static/, where the font files go
+
+[theme]
+base = "dark"
+backgroundColor = "#14181c"           # very dark gray, close to Letterboxd's
+secondaryBackgroundColor = "#2c3440"  # inputs, chat bubbles, cards
+textColor = "#ffffff"
+primaryColor = "#b4841e"              # the gold of the highlights
+linkColor = "#ffffff"
+linkUnderline = true
+borderColor = "#2c3440"
+# Body text in Book Compressed, headings in Medium Condensed. The licensed font comes first. Until its files are in app/static/fonts/, the browser falls back to
+# Archivo Narrow, a free condensed sans from Google Fonts.
+font = "ITC Franklin Gothic LT Compressed, Archivo Narrow:https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&display=swap, sans-serif"
+headingFont = "ITC Franklin Gothic LT Condensed, Archivo Narrow:https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&display=swap, sans-serif"
+baseFontSize = 18
+
+[[theme.fontFaces]]
+family = "ITC Franklin Gothic LT Compressed"
+url = "app/static/fonts/FranklinGothicLTCompressed-Book.ttf"
+weight = "100 900"
+
+[[theme.fontFaces]]
+family = "ITC Franklin Gothic LT Compressed"
+url = "app/static/fonts/FranklinGothicLTCompressed-BookItalic.ttf"
+weight = "100 900"
+style = "italic"
+
+# Only the Medium weight is installed, so it serves every weight.
+[[theme.fontFaces]]
+family = "ITC Franklin Gothic LT Condensed"
+url = "app/static/fonts/FranklinGothicLTCondensed-Medium.otf"
+weight = "100 900"
+
+[[theme.fontFaces]]
+family = "ITC Franklin Gothic LT Condensed"
+url = "app/static/fonts/FranklinGothicLTCondensed-MediumItalic.otf"
+weight = "100 900"
+style = "italic"
+
+# Extenda is loaded by the app's own styles (app/streamlit_app.py), since only the title uses it.
+
+[theme.sidebar]
+backgroundColor = "#1b2128"
+secondaryBackgroundColor = "#2c3440"
