@@ -112,9 +112,11 @@ def app_files() -> list[str]:
     return missing()
 
 
-if app_files():
-    st.error("The film index is missing. Build it with the notebooks (see the README), or set HF_DATASET and "
-             "HF_TOKEN in the secrets so the app can download it.")
+if missing_files := app_files():
+    app_files.clear()                      # check again on the next visit, for example once the secrets are saved
+    found = "found" if secret("HF_DATASET") else "not found"
+    st.error(f"The film index is missing ({', '.join(missing_files)}). Build it with the notebooks (see the README), "
+             f"or set HF_DATASET and HF_TOKEN in the secrets so the app can download it. HF_DATASET: {found}.")
     st.stop()
 
 
